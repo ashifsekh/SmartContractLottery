@@ -24,8 +24,11 @@
 
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
-import {VRFCoordinatorV2Interface} from "chainlink/src/v0.8/vrf/interfaces/VRFCoordinatorV2Interface.sol";
-import {VRFConsumerBaseV2} from "chainlink/src/v0.8/vrf/VRFConsumerBaseV2.sol";
+import {VRFCoordinatorV2Interface} 
+    from "chainlink/contracts/src/v0.8/vrf/interfaces/VRFCoordinatorV2Interface.sol";
+
+import {VRFConsumerBaseV2} 
+    from "chainlink/contracts/src/v0.8/vrf/VRFConsumerBaseV2.sol";
 
 /**
  * @title A Simple Raffle Contract
@@ -45,11 +48,9 @@ contract Raffle is VRFConsumerBaseV2{
     address payable[] private s_players;
     uint256 private s_lastTimeStamp;
     // Chainlink VRF related variables
-    address immutable i_vrfCoordinator;
-    // Chainlink VRF related variables
     VRFCoordinatorV2Interface private immutable i_vrfCoordinator;
     bytes32 private immutable i_gasLane;
-    uint256 private immutable i_subscriptionId;
+    uint64 private immutable i_subscriptionId;
     uint16 private constant REQUEST_CONFIRMATIONS = 3;
     uint32 private immutable i_callbackGasLimit;
     uint32 private constant NUM_WORDS = 1;
@@ -57,15 +58,23 @@ contract Raffle is VRFConsumerBaseV2{
 
     event EnteredRaffle(address indexed player);
 
-    constructor (uint256 entranceFee, uint256 interval, address vrfCoordinator, bytes32 gasLane, uint256 subscriptionId, uint32 callbackGasLimit) {
+    constructor(
+        uint256 entranceFee,
+        uint256 interval,
+        address vrfCoordinator,
+        bytes32 gasLane,
+        uint64 subscriptionId,
+        uint32 callbackGasLimit
+) VRFConsumerBaseV2(vrfCoordinator) {
         i_entranceFee = entranceFee;
         i_interval = interval;
         s_lastTimeStamp = block.timestamp;
+
         i_vrfCoordinator = VRFCoordinatorV2Interface(vrfCoordinator);
         i_gasLane = gasLane;
         i_subscriptionId = subscriptionId;
         i_callbackGasLimit = callbackGasLimit;
-    }
+}
 
     function enterRaffle() external payable {
         // require(msg.value >= i_entranceFee, "Not enough ETH sent!");
@@ -77,27 +86,36 @@ contract Raffle is VRFConsumerBaseV2{
 
     }
 
-    function pickWinner() public {
+    function pickWinner() external {
         // 1.Get a random number 
         // 2.Use the random number to the pick the pickWinner
         // 3.Automatically called 
         // check to see if enough time has passed
         if (block.timestamp - s_lastTimeStamp < i_interval) revert();
 
-        uint256 requestId = COORDINATOR.requestRandomWords(
-            keyHash,
-            s_subscriptionId,
-            requestConfirmations,
-            callbackGasLimit,
-            numWords
-    );
+        uint256 requestId = i_vrfCoordinator.requestRandomWords(
+            i_gasLane,
+            i_subscriptionId,
+            REQUEST_CONFIRMATIONS,
+            i_callbackGasLimit,
+            NUM_WORDS
+);
 
     }
+
+    function fulfillRandomWords(
+    uint256 /* requestId */,
+    uint256[] memory randomWords
+) internal override {
+    // Winner logic will be added later
+}
+
 
     /** Getter Function */
     function getEntranceFee() external view returns (uint256) {
         return i_entranceFee;
     }
+
 
 }
 
