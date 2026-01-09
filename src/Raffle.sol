@@ -46,15 +46,25 @@ contract Raffle is VRFConsumerBaseV2{
     uint256 private s_lastTimeStamp;
     // Chainlink VRF related variables
     address immutable i_vrfCoordinator;
+    // Chainlink VRF related variables
+    VRFCoordinatorV2Interface private immutable i_vrfCoordinator;
+    bytes32 private immutable i_gasLane;
+    uint256 private immutable i_subscriptionId;
+    uint16 private constant REQUEST_CONFIRMATIONS = 3;
+    uint32 private immutable i_callbackGasLimit;
+    uint32 private constant NUM_WORDS = 1;
 
 
     event EnteredRaffle(address indexed player);
 
-    constructor (uint256 entranceFee, uint256 interval, address vrfCoordinator) {
+    constructor (uint256 entranceFee, uint256 interval, address vrfCoordinator, bytes32 gasLane, uint256 subscriptionId, uint32 callbackGasLimit) {
         i_entranceFee = entranceFee;
         i_interval = interval;
         s_lastTimeStamp = block.timestamp;
-        i_vrfCoordinator = vrfCoordinator;
+        i_vrfCoordinator = VRFCoordinatorV2Interface(vrfCoordinator);
+        i_gasLane = gasLane;
+        i_subscriptionId = subscriptionId;
+        i_callbackGasLimit = callbackGasLimit;
     }
 
     function enterRaffle() external payable {
