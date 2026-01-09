@@ -1,7 +1,5 @@
 name: CI
 
-permissions: {}
-
 on:
   push:
   pull_request:
@@ -16,23 +14,36 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+
     steps:
+      # 1. Checkout the repo with submodules
       - uses: actions/checkout@v5
         with:
           persist-credentials: false
           submodules: recursive
 
+      # 2. Install Foundry toolchain
       - name: Install Foundry
         uses: foundry-rs/foundry-toolchain@v1
 
+      # 3. Show Forge version
       - name: Show Forge version
         run: forge --version
 
+      # 4. Install project dependencies
+      - name: Install dependencies
+        run: |
+          forge install smartcontractkit/chainlink-brownie-contracts
+          forge install foundry-rs/forge-std
+
+      # 5. Check formatting
       - name: Run Forge fmt
         run: forge fmt --check
 
+      # 6. Build the project
       - name: Run Forge build
         run: forge build --sizes
 
+      # 7. Run tests
       - name: Run Forge tests
         run: forge test -vvv
