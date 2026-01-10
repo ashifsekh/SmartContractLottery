@@ -42,9 +42,9 @@ contract Raffle is VRFConsumerBaseV2 {
 
     // Type declarations
     enum RaffleState {
-    OPEN,           // 0
-    CALCULATING     // 1
-}
+        OPEN, // 0
+        CALCULATING // 1
+    }
     // State variables
     // Put this one in `Raffle related variables`
     RaffleState private s_raffleState;
@@ -90,7 +90,7 @@ contract Raffle is VRFConsumerBaseV2 {
         // require(msg.value >= i_entranceFee, "Not enough ETH sent!");
         if (msg.value < i_entranceFee) revert Raffle__NotEnoughEthSent();
         // If not open you don't enter.
-        if(s_raffleState != RaffleState.OPEN) revert Raffle__RaffleNotOpen(); 
+        if (s_raffleState != RaffleState.OPEN) revert Raffle__RaffleNotOpen();
 
         s_players.push(payable(msg.sender));
         //1.Makes migration easier
