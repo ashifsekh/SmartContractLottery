@@ -96,13 +96,13 @@ contract Raffle is VRFConsumerBaseV2 {
     }
 
     function fulfillRandomWords(uint256 requestId, uint256[] memory randomWords) internal override {
-            uint256 indexOfWinner = randomWords[0] % s_players.length;
-            address payable winner = s_players[indexOfWinner];
-            s_recentWinner = winner;
-            (bool success,) = winner.call{value:address(this).balance}("");
-            if (!success) {
-                revert Raffle__TransferFailed();
-    }
+        uint256 indexOfWinner = randomWords[0] % s_players.length;
+        address payable winner = s_players[indexOfWinner];
+        s_recentWinner = winner;
+        (bool success,) = winner.call{value: address(this).balance}("");
+        if (!success) {
+            revert Raffle__TransferFailed();
+        }
     }
 
     /**
