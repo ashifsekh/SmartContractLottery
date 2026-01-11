@@ -132,4 +132,3 @@ contract Raffle is VRFConsumerBaseV2 {
         return i_entranceFee;
     }
 }
-
