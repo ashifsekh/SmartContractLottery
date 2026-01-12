@@ -12,3 +12,34 @@ docs/
 
 # Dotenv file
 .env
+
+# Dependencies
+node_modules/
+
+# Coverage
+coverage/
+coverage.json
+lcov.info
+
+# TypeScript
+typechain-types/
+
+# Hardhat files (if using)
+artifacts/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
