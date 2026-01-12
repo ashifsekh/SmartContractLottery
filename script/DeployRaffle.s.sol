@@ -5,6 +5,7 @@ import {Script} from "forge-std/Script.sol";
 import {Raffle} from "../src/Raffle.sol";
 import {HelperConfig} from "./HelperConfig.s.sol";
 import {CreateSubscription} from "./Interactions.sol";
+import {VRFCoordinatorV2Mock} from "chainlink/contracts/src/v0.8/vrf/mocks/VRFCoordinatorV2Mock.sol";
 
 contract DeployRaffle is Script {
     function run() external {}
@@ -13,13 +14,8 @@ contract DeployRaffle is Script {
         HelperConfig helperConfig = new HelperConfig();
         HelperConfig.NetworkConfig memory networkConfig = helperConfig.getConfig();
 
-        if (networkConfig.subscriptionId == 0) {
-            CreateSubscription createSubscription = new CreateSubscription();
-            (networkConfig.subscriptionId, networkConfig.vrfCoordinator) =
-                createSubscription.createSubscription(networkConfig.vrfCoordinator);
-        }
-
         vm.startBroadcast();
+
         Raffle raffle = new Raffle(
             networkConfig.entranceFee,
             networkConfig.interval,
@@ -28,7 +24,15 @@ contract DeployRaffle is Script {
             networkConfig.subscriptionId,
             networkConfig.callbackGasLimit
         );
+
+        // Add raffle as consumer for local chain
+        if (block.chainid == 31337) {
+            VRFCoordinatorV2Mock(networkConfig.vrfCoordinator)
+                .addConsumer(networkConfig.subscriptionId, address(raffle));
+        }
+
         vm.stopBroadcast();
+
         return (raffle, helperConfig);
     }
 }
