@@ -33,9 +33,6 @@ contract RaffleTest is Test {
         gasLane = networkConfig.gasLane;
         callbackGasLimit = networkConfig.callbackGasLimit;
         subscriptionId = networkConfig.subscriptionId;
-        if (block.chainid == 31337) {
-            VRFCoordinatorV2_5Mock(vrfCoordinator).addConsumer(subscriptionId, address(raffle));
-        }
         vm.deal(PLAYER, STARTING_USER_BALANCE);
     }
 
