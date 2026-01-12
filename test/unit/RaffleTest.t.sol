@@ -4,6 +4,7 @@ import {Test} from "forge-std/Test.sol";
 import {DeployRaffle} from "../../script/DeployRaffle.s.sol";
 import {Raffle} from "../../src/Raffle.sol";
 import {HelperConfig} from "../../script/HelperConfig.s.sol";
+import {VRFCoordinatorV2_5Mock} from "chainlink/contracts/src/v0.8/vrf/mocks/VRFCoordinatorV2_5Mock.sol";
 
 contract RaffleTest is Test {
     Raffle public raffle;
@@ -32,6 +33,9 @@ contract RaffleTest is Test {
         gasLane = networkConfig.gasLane;
         callbackGasLimit = networkConfig.callbackGasLimit;
         subscriptionId = networkConfig.subscriptionId;
+        if (block.chainid == 31337) {
+            VRFCoordinatorV2_5Mock(vrfCoordinator).addConsumer(subscriptionId, address(raffle));
+        }
         vm.deal(PLAYER, STARTING_USER_BALANCE);
     }
 
@@ -56,7 +60,7 @@ contract RaffleTest is Test {
     function testEnteringRaffleEmitsEvent() public {
         vm.prank(PLAYER);
         vm.expectEmit(true, false, false, false, address(raffle));
-        emit Raffle.EnteredRaffle(PLAYER);
+        emit EnteredRaffle(PLAYER);
         raffle.enterRaffle{value: entranceFee}();
     }
 

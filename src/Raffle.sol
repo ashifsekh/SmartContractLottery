@@ -23,9 +23,9 @@
 
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
-import {VRFCoordinatorV2Interface} from "chainlink/contracts/src/v0.8/vrf/interfaces/VRFCoordinatorV2Interface.sol";
-
-import {VRFConsumerBaseV2} from "chainlink/contracts/src/v0.8/vrf/VRFConsumerBaseV2.sol";
+import {IVRFCoordinatorV2Plus} from "chainlink/contracts/src/v0.8/vrf/dev/interfaces/IVRFCoordinatorV2Plus.sol";
+import {VRFConsumerBaseV2Plus} from "chainlink/contracts/src/v0.8/vrf/dev/VRFConsumerBaseV2Plus.sol";
+import {VRFV2PlusClient} from "chainlink/contracts/src/v0.8/vrf/dev/libraries/VRFV2PlusClient.sol";
 
 import {
     AutomationCompatibleInterface
@@ -38,7 +38,7 @@ import {
  * @dev It implements Chainlink VRFv2.5 and Chainlink Automation
  */
 
-contract Raffle is VRFConsumerBaseV2, AutomationCompatibleInterface {
+contract Raffle is VRFConsumerBaseV2Plus, AutomationCompatibleInterface {
     // Errors
     error Raffle__NotEnoughEthSent();
     error Raffle__TransferFailed();
@@ -58,9 +58,9 @@ contract Raffle is VRFConsumerBaseV2, AutomationCompatibleInterface {
     address payable[] private s_players;
     uint256 private s_lastTimeStamp;
     // Chainlink VRF related variables
-    VRFCoordinatorV2Interface private immutable i_vrfCoordinator;
+    IVRFCoordinatorV2Plus private immutable i_vrfCoordinator;
     bytes32 private immutable i_gasLane;
-    uint64 private immutable i_subscriptionId;
+    uint256 private immutable i_subscriptionId;
     uint16 private constant REQUEST_CONFIRMATIONS = 3;
     uint32 private immutable i_callbackGasLimit;
     uint32 private constant NUM_WORDS = 1;
@@ -76,14 +76,14 @@ contract Raffle is VRFConsumerBaseV2, AutomationCompatibleInterface {
         uint256 interval,
         address vrfCoordinator,
         bytes32 gasLane,
-        uint64 subscriptionId,
+        uint256 subscriptionId,
         uint32 callbackGasLimit
-    ) VRFConsumerBaseV2(vrfCoordinator) {
+    ) VRFConsumerBaseV2Plus(vrfCoordinator) {
         i_entranceFee = entranceFee;
         i_interval = interval;
         s_lastTimeStamp = block.timestamp;
 
-        i_vrfCoordinator = VRFCoordinatorV2Interface(vrfCoordinator);
+        i_vrfCoordinator = IVRFCoordinatorV2Plus(vrfCoordinator);
         i_gasLane = gasLane;
         i_subscriptionId = subscriptionId;
         i_callbackGasLimit = callbackGasLimit;
@@ -146,15 +146,23 @@ contract Raffle is VRFConsumerBaseV2, AutomationCompatibleInterface {
             revert Raffle__UpkeepNotNeeded(address(this).balance, s_players.length, uint256(s_raffleState));
         }
         s_raffleState = RaffleState.CALCULATING;
-        i_vrfCoordinator.requestRandomWords(
-            i_gasLane, i_subscriptionId, REQUEST_CONFIRMATIONS, i_callbackGasLimit, NUM_WORDS
-        );
+
+        VRFV2PlusClient.RandomWordsRequest memory req = VRFV2PlusClient.RandomWordsRequest({
+            keyHash: i_gasLane,
+            subId: i_subscriptionId,
+            requestConfirmations: REQUEST_CONFIRMATIONS,
+            callbackGasLimit: i_callbackGasLimit,
+            numWords: NUM_WORDS,
+            extraArgs: VRFV2PlusClient._argsToBytes(VRFV2PlusClient.ExtraArgsV1({nativePayment: false}))
+        });
+
+        i_vrfCoordinator.requestRandomWords(req);
     }
 
     function fulfillRandomWords(
         uint256,
         /* requestId */
-        uint256[] memory randomWords
+        uint256[] calldata randomWords
     )
         internal
         override
