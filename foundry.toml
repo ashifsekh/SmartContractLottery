@@ -7,3 +7,8 @@ remappings = [
     "chainlink/=lib/chainlink/contracts/",
     "forge-std/=lib/forge-std/src/"
 ]
+
+fs_permissions = [
+    {access = "read", path ="./broadcast"},
+    {access = "read", path ="./reports"},
+]
