@@ -23,15 +23,9 @@
 
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
-import {
-    IVRFCoordinatorV2Plus
-} from "chainlink/contracts/src/v0.8/vrf/dev/interfaces/IVRFCoordinatorV2Plus.sol";
-import {
-    VRFConsumerBaseV2Plus
-} from "chainlink/contracts/src/v0.8/vrf/dev/VRFConsumerBaseV2Plus.sol";
-import {
-    VRFV2PlusClient
-} from "chainlink/contracts/src/v0.8/vrf/dev/libraries/VRFV2PlusClient.sol";
+import {IVRFCoordinatorV2Plus} from "chainlink/contracts/src/v0.8/vrf/dev/interfaces/IVRFCoordinatorV2Plus.sol";
+import {VRFConsumerBaseV2Plus} from "chainlink/contracts/src/v0.8/vrf/dev/VRFConsumerBaseV2Plus.sol";
+import {VRFV2PlusClient} from "chainlink/contracts/src/v0.8/vrf/dev/libraries/VRFV2PlusClient.sol";
 
 import {
     AutomationCompatibleInterface
@@ -49,11 +43,7 @@ contract Raffle is VRFConsumerBaseV2Plus, AutomationCompatibleInterface {
     error Raffle__NotEnoughEthSent();
     error Raffle__TransferFailed();
     error Raffle__RaffleNotOpen();
-    error Raffle__UpkeepNotNeeded(
-        uint256 currentBalance,
-        uint256 numPlayers,
-        uint256 raffleState
-    );
+    error Raffle__UpkeepNotNeeded(uint256 currentBalance, uint256 numPlayers, uint256 raffleState);
 
     // Type declarations
     enum RaffleState {
@@ -126,7 +116,14 @@ contract Raffle is VRFConsumerBaseV2Plus, AutomationCompatibleInterface {
      */
     function checkUpkeep(
         bytes memory /* checkData */
-    ) public view returns (bool upkeepNeeded, bytes memory /* performData */) {
+    )
+        public
+        view
+        returns (
+            bool upkeepNeeded,
+            bytes memory /* performData */
+        )
+    {
         bool isOpen = RaffleState.OPEN == s_raffleState;
         bool timePassed = ((block.timestamp - s_lastTimeStamp) >= i_interval);
         bool hasPlayers = s_players.length > 0;
@@ -135,33 +132,31 @@ contract Raffle is VRFConsumerBaseV2Plus, AutomationCompatibleInterface {
         return (upkeepNeeded, "0x0");
     }
 
-    function performUpkeep(bytes calldata /* performData */) external override {
+    function performUpkeep(
+        bytes calldata /* performData */
+    )
+        external
+        override
+    {
         // 1.Get a random number
         // 2.Use the random number to the pick the pickWinner
         // 3.Automatically called
 
-        (bool upkeepNeeded, ) = checkUpkeep("");
+        (bool upkeepNeeded,) = checkUpkeep("");
         // require(upkeepNeeded, "Upkeep not needed");
         if (!upkeepNeeded) {
-            revert Raffle__UpkeepNotNeeded(
-                address(this).balance,
-                s_players.length,
-                uint256(s_raffleState)
-            );
+            revert Raffle__UpkeepNotNeeded(address(this).balance, s_players.length, uint256(s_raffleState));
         }
         s_raffleState = RaffleState.CALCULATING;
 
-        VRFV2PlusClient.RandomWordsRequest memory req = VRFV2PlusClient
-            .RandomWordsRequest({
-                keyHash: i_gasLane,
-                subId: i_subscriptionId,
-                requestConfirmations: REQUEST_CONFIRMATIONS,
-                callbackGasLimit: i_callbackGasLimit,
-                numWords: NUM_WORDS,
-                extraArgs: VRFV2PlusClient._argsToBytes(
-                    VRFV2PlusClient.ExtraArgsV1({nativePayment: false})
-                )
-            });
+        VRFV2PlusClient.RandomWordsRequest memory req = VRFV2PlusClient.RandomWordsRequest({
+            keyHash: i_gasLane,
+            subId: i_subscriptionId,
+            requestConfirmations: REQUEST_CONFIRMATIONS,
+            callbackGasLimit: i_callbackGasLimit,
+            numWords: NUM_WORDS,
+            extraArgs: VRFV2PlusClient._argsToBytes(VRFV2PlusClient.ExtraArgsV1({nativePayment: false}))
+        });
 
         i_vrfCoordinator.requestRandomWords(req);
     }
@@ -170,7 +165,10 @@ contract Raffle is VRFConsumerBaseV2Plus, AutomationCompatibleInterface {
         uint256,
         /* requestId */
         uint256[] calldata randomWords
-    ) internal override {
+    )
+        internal
+        override
+    {
         uint256 indexOfWinner = randomWords[0] % s_players.length;
         address payable winner = s_players[indexOfWinner];
         s_recentWinner = winner;
@@ -178,7 +176,7 @@ contract Raffle is VRFConsumerBaseV2Plus, AutomationCompatibleInterface {
         s_players = new address payable[](0);
         s_lastTimeStamp = block.timestamp;
         emit WinnerPicked(s_recentWinner);
-        (bool success, ) = winner.call{value: address(this).balance}("");
+        (bool success,) = winner.call{value: address(this).balance}("");
         if (!success) {
             revert Raffle__TransferFailed();
         }

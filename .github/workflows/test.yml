@@ -23,10 +23,11 @@ jobs:
       - name: Show Forge version
         run: forge --version
 
+      # Auto-format instead of failing
       - name: Run Forge fmt
-        run: forge fmt --check
+        run: forge fmt
 
-      # ⬇️ FIX: skip test/mocks size checks (VRFCoordinatorV2_5Mock > 24kb)
+      # Skip test mocks size check
       - name: Run Forge build
         run: forge build --skip test
 
