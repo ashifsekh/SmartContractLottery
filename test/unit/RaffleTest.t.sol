@@ -199,4 +199,17 @@ contract RaffleTest is Test {
         bytes32 requestIdTopic = entries[1].topics[0];
         assert(requestIdTopic == keccak256("RequestedRaffleWinner(uint256)"));
     }
+
+    /*//////////////////////////////////////////////////////////////
+                          FULFILLRANDOMWORDS
+    //////////////////////////////////////////////////////////////*/
+
+    function testFulfillRandomWordsCanOnlyBeCalledAfterPerformUpkeep(uint256 randomRequestId)
+        public
+        raffleEnteredAndTimePassed
+    {
+        //Act / Assert
+        vm.expectRevert();
+        VRFCoordinatorV2_5Mock(vrfCoordinator).fulfillRandomWords(randomRequestId, address(raffle));
+    }
 }
