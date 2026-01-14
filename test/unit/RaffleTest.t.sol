@@ -9,6 +9,7 @@ import {DeployRaffle} from "../../script/DeployRaffle.s.sol";
 import {Raffle} from "../../src/Raffle.sol";
 import {HelperConfig} from "../../script/HelperConfig.s.sol";
 import {VRFCoordinatorV2_5Mock} from "chainlink/contracts/src/v0.8/vrf/mocks/VRFCoordinatorV2_5Mock.sol";
+import {Vm} from "forge-std/Vm.sol";
 
 contract RaffleTest is Test {
     Raffle public raffle;
@@ -174,5 +175,28 @@ contract RaffleTest is Test {
             )
         );
         raffle.performUpkeep("");
+    }
+
+    modifier raffleEnteredAndTimePassed() {
+        vm.prank(PLAYER);
+        raffle.enterRaffle{value: entranceFee}();
+
+        vm.warp(block.timestamp + interval + 1);
+        vm.roll(block.number + 1);
+        _;
+    }
+
+    function testPerformUpkeepUpdatesRaffleStateAndEmitsRequestId() public raffleEnteredAndTimePassed {
+        //Act
+        vm.recordLogs();
+        raffle.performUpkeep("");
+
+        //Assert
+        Raffle.RaffleState raffleState = raffle.getRaffleState();
+        assert(uint256(raffleState) == 1);
+
+        Vm.Log[] memory entries = vm.getRecordedLogs();
+        bytes32 requestIdTopic = entries[1].topics[0];
+        assert(requestIdTopic == keccak256("RequestedRaffleWinner(uint256)"));
     }
 }
