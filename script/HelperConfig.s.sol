@@ -71,7 +71,7 @@ contract HelperConfig is Script, CodeConstants {
         VRFCoordinatorV2_5Mock vrfCoordinatorMock =
             new VRFCoordinatorV2_5Mock(MOCK_BASE_FEE, MOCK_GAS_PRICE_LINK, MOCK_WEI_PER_UNIT_LINK);
         uint256 subId = vrfCoordinatorMock.createSubscription();
-        vrfCoordinatorMock.fundSubscription(subId, 3 ether);
+        vrfCoordinatorMock.fundSubscription(subId, 1000 ether);
         linkToken.mint(msg.sender, 1e27);
         vm.stopBroadcast();
 
